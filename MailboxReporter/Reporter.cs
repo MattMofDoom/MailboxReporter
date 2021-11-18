@@ -33,9 +33,14 @@ namespace MailboxReporter
             Log.Information().Add("{Service:l} v{Version:l} started", Logging.Config.AppName,
                 Logging.Config.AppVersion);
 
-            Log.Information().AddProperty("Mailboxes", Config.Addresses, true).Add("Configured mailboxes: {Mailboxes:l}");
-            Log.Information().Add("Exchange URL: {Url:l}", string.IsNullOrEmpty(Config.Url) ? "Autodiscover" : Config.Url);
-            Log.Information().Add("Authentication: {AuthenticationType:l}", string.IsNullOrEmpty(Config.UserName) && string.IsNullOrEmpty(Config.Password) ? "Service identity" : "Supplied credentials");
+            Log.Information().AddProperty("Mailboxes", Config.Addresses, true)
+                .Add("Configured mailboxes: {Mailboxes:l}");
+            Log.Information().Add("Exchange URL: {Url:l}",
+                string.IsNullOrEmpty(Config.Url) ? "Autodiscover" : Config.Url);
+            Log.Information().Add("Authentication: {AuthenticationType:l}",
+                string.IsNullOrEmpty(Config.UserName) && string.IsNullOrEmpty(Config.Password)
+                    ? "Service identity"
+                    : "Supplied credentials");
             Log.Information().Add("First Run: {FirstRun}", Config.FirstRun);
             Log.Information().Add("Include Partial Body: {IncludePartialBody}", Config.IncludePartialBody);
             Log.Information().Add("Last tick: {LastTick:l}", Config.LastTick.ToString("dd MMM yyyy HH:mm:ss"));

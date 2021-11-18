@@ -95,7 +95,8 @@ namespace MailboxReporter.Classes
                         ModifiedName = email.LastModifiedName,
                         BodyType = email.Body.BodyType,
                         Body = Config.IncludePartialBody && !string.IsNullOrEmpty(email.Body)
-                            ? email.Body.Text.Length < Config.PartialBodyLength ? email.Body.Text : email.Body.Text.Substring(0, Config.PartialBodyLength)
+                            ? email.Body.Text.Length < Config.PartialBodyLength ? email.Body.Text :
+                            email.Body.Text.Substring(0, Config.PartialBodyLength)
                             : "",
                         Subject = email.Subject,
                         FromName = email.Sender.Name,

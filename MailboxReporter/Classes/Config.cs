@@ -12,7 +12,6 @@ namespace MailboxReporter.Classes
         public static readonly string Password;
         public static readonly string Url;
         public static readonly List<string> Addresses;
-        public static bool FirstRun { get; private set; }
         public static readonly bool IncludePartialBody;
         public static readonly int PartialBodyLength;
         public static DateTime LastTick;
@@ -32,12 +31,14 @@ namespace MailboxReporter.Classes
             LastTick = GetLastTick(ConfigurationManager.AppSettings["LastTick"]);
         }
 
+        public static bool FirstRun { get; private set; }
+
         private static int GetInt(object sourceObject)
         {
             var sourceString = string.Empty;
 
             if (!Convert.IsDBNull(sourceObject))
-                sourceString = (string)sourceObject;
+                sourceString = (string) sourceObject;
 
             if (int.TryParse(sourceString, out var destInt))
                 return destInt;
@@ -84,14 +85,10 @@ namespace MailboxReporter.Classes
             var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
             var settings = config.AppSettings.Settings;
             if (!settings.AllKeys.Contains("LastTick"))
-            {
                 settings.Add(
                     new KeyValueConfigurationElement("LastTick", lastTick.ToString(CultureInfo.CurrentCulture)));
-            }
             else
-            {
                 settings["LastTick"].Value = lastTick.ToString(CultureInfo.CurrentCulture);
-            }
 
             config.Save();
             LastTick = lastTick;
