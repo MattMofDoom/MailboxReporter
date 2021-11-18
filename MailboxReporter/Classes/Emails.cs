@@ -39,14 +39,14 @@ namespace MailboxReporter.Classes
                 new SearchFilter.IsGreaterThan(ItemSchema.DateTimeReceived,
                     Config.LastTick.Subtract(TimeSpan.FromDays(1))),
                 new SearchFilter.IsEqualTo(EmailMessageSchema.IsRead, false));
-            
+
             //Make an initial connection to get the total emails
             var itemCount = inboxFolder.TotalCount;
             var unreadCount = inboxFolder.UnreadCount;
-            
+
             var emailProps = new PropertySet(BasePropertySet.FirstClassProperties);
             FindItemsResults<Item> fiResults;
-            var iv = itemCount > 1000 ? new ItemView(1000) : new ItemView(itemCount);
+            var iv = itemCount > 1000 ? new ItemView(1000) : itemCount > 0 ? new ItemView(itemCount) : new ItemView(1);
             var pageCount = 1;
             var totalCount = 0;
 
@@ -57,7 +57,7 @@ namespace MailboxReporter.Classes
             {
                 itemCount = exchangeServer.FindItems(folderId, lastDay, new ItemView(1)).TotalCount;
                 unreadCount = exchangeServer.FindItems(folderId, lastDayUnread, new ItemView(1)).TotalCount;
-                iv = itemCount > 1000 ? new ItemView(1000) : new ItemView(itemCount);
+                iv = itemCount > 1000 ? new ItemView(1000) : itemCount > 0 ? new ItemView(itemCount) : new ItemView(1);
 
                 Log.Information().Add(
                     "[{Address:l}] Retrieving last 24 hours from {LastReportTick:l} - Emails found: {ItemCount}, unread: {UnreadCount}  ...",
