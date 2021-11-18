@@ -63,7 +63,7 @@ namespace MailboxReporter.Classes
 
                 Log.Information().Add(
                     "[{Address:l}] Retrieving last 24 hours from {LastReportTick:l} - Emails found: {ItemCount}, unread: {UnreadCount}  ...",
-                    address, Config.LastTick.ToString("dd MMM yyyy hh:mm:ss"), itemCount, unreadCount);
+                    address, Config.LastTick.ToString("dd MMM yyyy HH:mm:ss"), itemCount, unreadCount);
             }
             else
             {

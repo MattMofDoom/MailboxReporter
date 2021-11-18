@@ -38,7 +38,7 @@ namespace MailboxReporter
             Log.Information().Add("Authentication: {AuthenticationType:l}", string.IsNullOrEmpty(Config.UserName) && string.IsNullOrEmpty(Config.Password) ? "Service identity" : "Supplied credentials");
             Log.Information().Add("First Run: {FirstRun}", Config.FirstRun);
             Log.Information().Add("Include Partial Body: {IncludePartialBody}", Config.IncludePartialBody);
-            Log.Information().Add("Last tick: {LastTick:l}", Config.LastTick.ToString("dd MMM yyyy hh:mm:ss"));
+            Log.Information().Add("Last tick: {LastTick:l}", Config.LastTick.ToString("dd MMM yyyy HH:mm:ss"));
 
             _reportTimer = new Timer {Interval = 1000, AutoReset = false};
             _reportTimer.Elapsed += ReportTick;
