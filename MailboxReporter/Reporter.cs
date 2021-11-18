@@ -86,8 +86,6 @@ namespace MailboxReporter
 
                 if (Config.FirstRun)
                     Config.DisableFirstRun();
-
-                Interlocked.CompareExchange(ref _lockState, Available, Locked);
             }
             catch (Exception ex)
             {
@@ -95,20 +93,7 @@ namespace MailboxReporter
                     ex.Message);
             }
 
-            //foreach (var address in Config.Addresses)
-            //    try
-            //    {
-            //        _thisReportTick = DateTime.Now;
-            //        Log.Information().Add("[{Address:l}] Begin retrieving emails ...", address);
-            //        await Emails.ListEmails(address, Config.FirstRun, _lastReportTick);
-            //        Log.Information().Add("[{Address:l}] Completed retrieving and updating emails!", address);
-            //        _lastReportTick = _thisReportTick;
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Log.Exception(ex).Add("[{Address:l}] Error retrieving emails: {Message:l}", address,
-            //            ex.Message);
-            //    }
+            Interlocked.CompareExchange(ref _lockState, Available, Locked);
         }
 
         private void UnhandledException(object sender, UnhandledExceptionEventArgs e)

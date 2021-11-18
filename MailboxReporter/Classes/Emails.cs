@@ -32,12 +32,6 @@ namespace MailboxReporter.Classes
 
             var folderId = new FolderId(WellKnownFolderName.Inbox, new Mailbox(address));
             var inboxFolder = Folder.Bind(exchangeServer, folderId);
-            var allUnread = new SearchFilter.SearchFilterCollection(LogicalOperator.And,
-                new SearchFilter.IsEqualTo(EmailMessageSchema.IsRead, false));
-
-            //Make an initial connection to get the total emails
-            var itemCount = inboxFolder.FindItems(new ItemView(1)).TotalCount;
-            var unreadCount = exchangeServer.FindItems(folderId, allUnread, new ItemView(1)).TotalCount;
             var lastDay = new SearchFilter.SearchFilterCollection(LogicalOperator.And,
                 new SearchFilter.IsGreaterThan(ItemSchema.DateTimeReceived,
                     Config.LastTick.Subtract(TimeSpan.FromDays(1))));
@@ -45,7 +39,11 @@ namespace MailboxReporter.Classes
                 new SearchFilter.IsGreaterThan(ItemSchema.DateTimeReceived,
                     Config.LastTick.Subtract(TimeSpan.FromDays(1))),
                 new SearchFilter.IsEqualTo(EmailMessageSchema.IsRead, false));
-
+            
+            //Make an initial connection to get the total emails
+            var itemCount = inboxFolder.TotalCount;
+            var unreadCount = inboxFolder.UnreadCount;
+            
             var emailProps = new PropertySet(BasePropertySet.FirstClassProperties);
             FindItemsResults<Item> fiResults;
             var iv = itemCount > 1000 ? new ItemView(1000) : new ItemView(itemCount);
