@@ -52,7 +52,6 @@ namespace MailboxReporter.Classes
                 var itemCount = inboxFolder.TotalCount;
                 var unreadCount = inboxFolder.UnreadCount;
 
-                var emailProps = new PropertySet(BasePropertySet.FirstClassProperties);
                 FindItemsResults<Item> fiResults;
                 var iv = itemCount > 1000 ? new ItemView(1000) :
                     itemCount > 0 ? new ItemView(itemCount) : new ItemView(1);
@@ -106,7 +105,8 @@ namespace MailboxReporter.Classes
                         address, pageCount, fiResults.Items.Count);
 
                     foreach (var emailRecord in fiResults
-                        .Select(mailItem => EmailMessage.Bind(exchangeServer, mailItem.Id, emailProps))
+                        .Select(mailItem => EmailMessage.Bind(exchangeServer, mailItem.Id,
+                            new PropertySet(BasePropertySet.FirstClassProperties)))
                         .Select(email => new EmailRecord
                         {
                             Id = email.Id.UniqueId,
@@ -155,6 +155,12 @@ namespace MailboxReporter.Classes
                     now = DateTime.Now;
                     pageCount++;
                 } while (fiResults.MoreAvailable);
+
+                Log.Information().Add(
+                    "[{Address:l}] Mailbox Completed, Emails: {TotalCount}, Duration: {Duration:N0} seconds!",
+                    address, totalCount,
+                    (DateTime.Now - startTime).TotalSeconds);
+                fiResults.Items.Clear();
             }
             catch (Exception ex)
             {
@@ -169,9 +175,6 @@ namespace MailboxReporter.Classes
 
             sqlClient.Disconnect();
             sqlClient.Dispose();
-
-            Log.Information().Add("[{Address:l}] Mailbox Completed, Duration: {Duration:N0} seconds!", address,
-                (DateTime.Now - startTime).TotalSeconds);
 
             return result;
         }

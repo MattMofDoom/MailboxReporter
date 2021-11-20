@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -82,7 +81,7 @@ namespace MailboxReporter
 
                 if (_reportTimer != null && !_reportTimer.AutoReset)
                 {
-                    _reportTimer.Interval = 60000;
+                    _reportTimer.Interval = 1000;
                     _reportTimer.AutoReset = true;
                     _reportTimer.Start();
                 }
@@ -102,26 +101,23 @@ namespace MailboxReporter
                             currentThreads.Count < Config.ConcurrentThreads
                                 ? currentThreads.Count
                                 : Config.ConcurrentThreads, Config.ConcurrentThreads);
-                    var allTasks = new List<Task>();
 
-                    foreach (var thread in currentThreads)
-                    {
-                        await throttler.WaitAsync();
 
-                        allTasks.Add(Task.Run(async () =>
+                    var allTasks = currentThreads.Select(thread => Task.Run(async () =>
                         {
+                            await throttler.WaitAsync();
+
                             try
                             {
                                 var result = await Emails.ListEmails(thread.Address);
 
                                 if (result.ErrorInfo != null)
                                 {
-                                    foreach (var t in Config.Addresses.Where(t =>
-                                        Config.Addresses[0].Address == thread.Address))
-                                        Config.Addresses[0].NextInterval =
-                                            DateTime.Now.AddMilliseconds(Config.BackoffInterval);
+                                    foreach (var mailbox in Config.Addresses.Where(mailbox =>
+                                        thread.Address == mailbox.Address))
+                                        mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.BackoffInterval);
 
-                                    Log.Information()
+                                    Log.Warning()
                                         .Add(
                                             "[{Address:l}] Errors detected - setting backoff interval of {Interval} seconds for next poll",
                                             thread.Address, Config.BackoffInterval / 1000);
@@ -129,10 +125,9 @@ namespace MailboxReporter
                                 }
                                 else
                                 {
-                                    foreach (var unused in Config.Addresses.Where(t =>
-                                        Config.Addresses[0].Address == thread.Address))
-                                        Config.Addresses[0].NextInterval =
-                                            DateTime.Now.AddMilliseconds(Config.PollInterval);
+                                    foreach (var mailbox in Config.Addresses.Where(mailbox =>
+                                        thread.Address == mailbox.Address))
+                                        mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.PollInterval);
                                 }
                             }
                             catch (Exception ex)
@@ -144,8 +139,8 @@ namespace MailboxReporter
                             {
                                 throttler.Release();
                             }
-                        }));
-                    }
+                        }))
+                        .ToList();
 
                     await Task.WhenAll(allTasks);
                     Log.Information().AddProperty("Addresses", Config.Addresses, true)
@@ -159,7 +154,13 @@ namespace MailboxReporter
                         if (Config.FirstRun)
                             Config.DisableFirstRun();
                     }
+
+                    foreach (var task in allTasks)
+                        task.Dispose();
+                    allTasks.Clear();
                 }
+
+                currentThreads.Clear();
             }
             catch (Exception ex)
             {
