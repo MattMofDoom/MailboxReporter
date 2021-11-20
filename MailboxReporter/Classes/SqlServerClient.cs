@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 namespace MailboxReporter.Classes
 {

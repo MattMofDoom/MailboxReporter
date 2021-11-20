@@ -13,6 +13,8 @@
     <Deterministic>true</Deterministic>
     <Authors>Matt Marlor</Authors>
     <Product>Mailbox Reporter</Product>
+    <ApplicationIcon>Mailbox.ico</ApplicationIcon>
+    <Version>1.0.1</Version>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -25,7 +27,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -34,6 +36,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Exchange.WebServices">
+      <HintPath>..\..\ews-managed-api\bin\Release\Microsoft.Exchange.WebServices.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
@@ -54,6 +59,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lurgle.Logging" Version="1.2.8" />
-    <PackageReference Include="Microsoft.Exchange.WebServices" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="4.0.0" />
   </ItemGroup>
 </Project>
