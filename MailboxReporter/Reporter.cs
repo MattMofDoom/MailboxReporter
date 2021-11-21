@@ -5,7 +5,6 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
 using System.Threading;
-using System.Threading.Tasks;
 using Lurgle.Logging;
 using MailboxReporter.Classes;
 using MailboxReporter.Enums;
@@ -40,24 +39,23 @@ namespace MailboxReporter
             {
                 Log.Information().Add("{Service:l} v{Version:l} started (Debug mode)", Logging.Config.AppName,
                     Logging.Config.AppVersion);
-                Log.Information().AddProperty("Mailboxes", Config.Addresses.Select(x => x.Address).ToList(), true)
+                Log.Debug().AddProperty("Mailboxes", Config.Addresses.Select(x => x.Address).ToList(), true)
                     .Add("Configured mailboxes: {Mailboxes:l}");
-                Log.Information().Add("Exchange URL: {Url:l}",
+                Log.Debug().Add("Exchange URL: {Url:l}",
                     string.IsNullOrEmpty(Config.Url) ? "Autodiscover" : Config.Url);
-                Log.Information().Add("Use Gzip: {UseGzip}", Config.UseGzip);
-                Log.Information().Add("Authentication: {AuthenticationType:l}",
+                Log.Debug().Add("Use Gzip: {UseGzip}", Config.UseGzip);
+                Log.Debug().Add("Authentication: {AuthenticationType:l}",
                     string.IsNullOrEmpty(Config.UserName) && string.IsNullOrEmpty(Config.Password)
                         ? "Service identity"
                         : "Supplied credentials");
-                Log.Information().Add("First Run: {FirstRun}", Config.FirstRun);
-                Log.Information().Add("Include Partial Body: {IncludePartialBody}", Config.IncludePartialBody);
-                Log.Information().Add("Partial body length: {PartialBodyLength}", Config.PartialBodyLength);
-                Log.Information().Add("Last X Hours: {LastHours}", Config.LastHours);
-                Log.Information().Add("Server timeout: {Timeout} seconds", Config.ServerTimeout / 1000);
-                Log.Information().Add("Concurrent Threads: {ConcurrentThreads}", Config.ConcurrentThreads);
-                Log.Information().Add("Poll interval: {PollInterval}", Config.PollInterval);
-                Log.Information().Add("Backoff interval: {BackoffInterval}", Config.BackoffInterval);
-                Log.Information().Add("Last tick: {LastTick:l}", Config.LastTick.ToString("dd MMM yyyy HH:mm:ss"));
+                Log.Debug().Add("First Run: {FirstRun}", Config.FirstRun);
+                Log.Debug().Add("Include Partial Body: {IncludePartialBody}", Config.IncludePartialBody);
+                Log.Debug().Add("Partial body length: {PartialBodyLength}", Config.PartialBodyLength);
+                Log.Debug().Add("Last X Hours: {LastHours}", Config.LastHours);
+                Log.Debug().Add("Server timeout: {Timeout} seconds", Config.ServerTimeout / 1000);
+                Log.Debug().Add("Poll interval: {PollInterval}", Config.PollInterval);
+                Log.Debug().Add("Backoff interval: {BackoffInterval}", Config.BackoffInterval);
+                Log.Debug().Add("Last tick: {LastTick:l}", Config.LastTick.ToString("dd MMM yyyy HH:mm:ss"));
             }
 
             _reportTimer = new Timer {Interval = 1000, AutoReset = false};
@@ -73,8 +71,10 @@ namespace MailboxReporter
             Logging.Close();
         }
 
-        private async void ReportTick(object sender, EventArgs e)
+        private void ReportTick(object sender, EventArgs e)
         {
+            var currentAddress = string.Empty;
+
             try
             {
                 if (Interlocked.CompareExchange(ref _lockState, Locked, Available) != Available) return;
@@ -87,65 +87,45 @@ namespace MailboxReporter
                 }
 
                 var thisReportTick = DateTime.Now;
-                var isError = false;
                 var currentThreads = Config.Addresses.Where(i => thisReportTick >= i.NextInterval)
                     .ToList();
 
                 if (currentThreads.Any())
                 {
-                    Log.Information().AddProperty("Addresses", Config.Addresses, true)
-                        .Add("Begin retrieving emails ...");
+                    Log.Information().AddProperty("Addresses", currentThreads.Select(x => x.Address).ToList(), true)
+                        .Add("Begin retrieving emails for {Addresses} ...");
 
-                    var throttler =
-                        new SemaphoreSlim(
-                            currentThreads.Count < Config.ConcurrentThreads
-                                ? currentThreads.Count
-                                : Config.ConcurrentThreads, Config.ConcurrentThreads);
+                    var isError = false;
 
-
-                    var allTasks = currentThreads.Select(thread => Task.Run(async () =>
+                    foreach (var thread in currentThreads)
+                        try
                         {
-                            await throttler.WaitAsync();
+                            currentAddress = thread.Address;
+                            var result = Emails.ListEmails(thread.Address);
+                            foreach (var mailbox in Config.Addresses.Where(mailbox =>
+                                thread.Address == mailbox.Address))
+                                mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.PollInterval);
+                        }
+                        catch (Exception ex)
+                        {
+                            isError = true;
+                            foreach (var mailbox in Config.Addresses.Where(mailbox =>
+                                currentAddress == mailbox.Address))
+                                mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.BackoffInterval);
 
-                            try
-                            {
-                                var result = await Emails.ListEmails(thread.Address);
+                            Log.Warning()
+                                .Add(
+                                    "[{Address:l}] Errors detected - setting backoff interval of {Interval} seconds for next poll",
+                                    currentAddress, Config.BackoffInterval / 1000);
 
-                                if (result.ErrorInfo != null)
-                                {
-                                    foreach (var mailbox in Config.Addresses.Where(mailbox =>
-                                        thread.Address == mailbox.Address))
-                                        mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.BackoffInterval);
+                            Log.Exception(ex).Add("[{Address:l}] Error retrieving emails: {Message:l}",
+                                thread.Address, ex.Message);
+                        }
 
-                                    Log.Warning()
-                                        .Add(
-                                            "[{Address:l}] Errors detected - setting backoff interval of {Interval} seconds for next poll",
-                                            thread.Address, Config.BackoffInterval / 1000);
-                                    isError = true;
-                                }
-                                else
-                                {
-                                    foreach (var mailbox in Config.Addresses.Where(mailbox =>
-                                        thread.Address == mailbox.Address))
-                                        mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.PollInterval);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.Exception(ex).Add("[{Address:l}] Error retrieving emails: {Message:l}",
-                                    thread.Address, ex.Message);
-                            }
-                            finally
-                            {
-                                throttler.Release();
-                            }
-                        }))
-                        .ToList();
-
-                    await Task.WhenAll(allTasks);
-                    Log.Information().AddProperty("Addresses", Config.Addresses, true)
-                        .Add("Completed retrieving and updating emails, Total duration {TotalDuration:N0} seconds!",
-                            (DateTime.Now - thisReportTick).TotalSeconds);
+                    Log.Information().AddProperty("Addresses", currentThreads.Select(x => x.Address).ToList(), true)
+                        .AddProperty("TotalDuration", (DateTime.Now - thisReportTick).TotalSeconds)
+                        .Add(
+                            "Completed retrieving and updating emails for {Addresses}, Total duration {TotalDuration:N0} seconds!");
 
                     if (!isError)
                     {
@@ -154,10 +134,6 @@ namespace MailboxReporter
                         if (Config.FirstRun)
                             Config.DisableFirstRun();
                     }
-
-                    foreach (var task in allTasks)
-                        task.Dispose();
-                    allTasks.Clear();
                 }
 
                 currentThreads.Clear();

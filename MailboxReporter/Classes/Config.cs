@@ -19,7 +19,6 @@ namespace MailboxReporter.Classes
         public static readonly bool IncludePartialBody;
         public static readonly int PartialBodyLength;
         public static readonly int LastHours;
-        public static readonly int ConcurrentThreads;
         public static readonly int ServerTimeout;
         public static readonly int PollInterval;
         public static readonly int BackoffInterval;
@@ -35,7 +34,7 @@ namespace MailboxReporter.Classes
             foreach (var mailbox in (ConfigurationManager.AppSettings["Addresses"] ?? "")
                 .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList())
                 Addresses.Add(new MailboxSetting
-                    {Address = mailbox, NextInterval = DateTime.Now});
+                    {Address = mailbox, NextInterval = DateTime.Now.AddSeconds(5)});
             UseGzip = GetBool(ConfigurationManager.AppSettings["UseGzip"]);
             FirstRun = GetBool(ConfigurationManager.AppSettings["FirstRun"]);
             IncludePartialBody = GetBool(ConfigurationManager.AppSettings["IncludePartialBody"]);
@@ -45,9 +44,6 @@ namespace MailboxReporter.Classes
             LastHours = GetInt(ConfigurationManager.AppSettings["LastHours"]);
             if (LastHours <= 0)
                 LastHours = 24;
-            ConcurrentThreads = GetInt(ConfigurationManager.AppSettings["ConcurrentThreads"]);
-            if (ConcurrentThreads <= 0 || ConcurrentThreads > 10)
-                ConcurrentThreads = 5;
             ServerTimeout = GetInt(ConfigurationManager.AppSettings["ServerTimeout"]);
             if (ServerTimeout <= 0 || ServerTimeout > 3600)
                 ServerTimeout = 200000;

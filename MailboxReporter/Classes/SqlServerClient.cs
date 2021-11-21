@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Configuration;
 using System.Data;
-using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
 namespace MailboxReporter.Classes
@@ -19,9 +18,9 @@ namespace MailboxReporter.Classes
             _reportConnection?.Dispose();
         }
 
-        public async Task Connect()
+        public void Connect()
         {
-            await _reportConnection.OpenAsync();
+            _reportConnection.Open();
         }
 
         public void Disconnect()
@@ -35,10 +34,10 @@ namespace MailboxReporter.Classes
                    !_reportConnection.State.Equals(ConnectionState.Broken);
         }
 
-        public async Task AddOrUpdate(string mailboxAddress, EmailRecord email)
+        public void AddOrUpdate(string mailboxAddress, EmailRecord email)
         {
             if (!IsOpen())
-                await Connect();
+                Connect();
 
             var sqlCmd = new SqlCommand("MailboxReporter_AddOrUpdate", _reportConnection)
             {
@@ -140,7 +139,7 @@ namespace MailboxReporter.Classes
                 }
             };
 
-            await sqlCmd.ExecuteNonQueryAsync();
+            sqlCmd.ExecuteNonQuery();
             sqlCmd.Dispose();
         }
     }
