@@ -7,7 +7,7 @@ namespace MailboxReporter.Classes
 {
     public class SqlServerClient : IDisposable
     {
-        private readonly SqlConnection _reportConnection =
+        private readonly SqlConnection reportConnection =
             new SqlConnection(ConfigurationManager.ConnectionStrings["MailboxReporterConnection"].ToString());
 
         public void Dispose()
@@ -15,23 +15,23 @@ namespace MailboxReporter.Classes
             if (IsOpen())
                 Disconnect();
 
-            _reportConnection?.Dispose();
+            reportConnection?.Dispose();
         }
 
         public void Connect()
         {
-            _reportConnection.Open();
+            reportConnection.Open();
         }
 
         public void Disconnect()
         {
-            _reportConnection.Close();
+            reportConnection.Close();
         }
 
         private bool IsOpen()
         {
-            return _reportConnection != null && _reportConnection.State > ConnectionState.Closed &&
-                   !_reportConnection.State.Equals(ConnectionState.Broken);
+            return reportConnection != null && reportConnection.State > ConnectionState.Closed &&
+                   !reportConnection.State.Equals(ConnectionState.Broken);
         }
 
         public void AddOrUpdate(string mailboxAddress, EmailRecord email)
@@ -39,7 +39,7 @@ namespace MailboxReporter.Classes
             if (!IsOpen())
                 Connect();
 
-            var sqlCmd = new SqlCommand("MailboxReporter_AddOrUpdate", _reportConnection)
+            var sqlCmd = new SqlCommand("MailboxReporter_AddOrUpdate", reportConnection)
             {
                 CommandType = CommandType.StoredProcedure,
                 Parameters =

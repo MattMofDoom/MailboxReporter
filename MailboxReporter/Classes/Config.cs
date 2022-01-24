@@ -32,7 +32,7 @@ namespace MailboxReporter.Classes
             Password = ConfigurationManager.AppSettings["Password"];
             Url = ConfigurationManager.AppSettings["Url"];
             foreach (var mailbox in (ConfigurationManager.AppSettings["Addresses"] ?? "")
-                .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList())
+                     .Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList())
                 Addresses.Add(new MailboxSetting
                     {Address = mailbox, NextInterval = DateTime.Now.AddSeconds(5)});
             UseGzip = GetBool(ConfigurationManager.AppSettings["UseGzip"]);

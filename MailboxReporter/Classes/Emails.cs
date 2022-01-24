@@ -122,39 +122,40 @@ namespace MailboxReporter.Classes
                     address, pageCount, fiResults.Items.Count);
 
                 foreach (var emailRecord in fiResults.Items
-                    .Select(mailItem => EmailMessage.Bind(exchangeServer, mailItem.Id,
-                        new PropertySet(BasePropertySet.FirstClassProperties)))
-                    .Select(email => new EmailRecord
-                    {
-                        Id = email.Id.UniqueId,
-                        ConversationId = email.ConversationId.UniqueId,
-                        InternetMessageId = email.InternetMessageId,
-                        SentDate = email.DateTimeCreated,
-                        ReceivedDate = email.DateTimeReceived,
-                        CreatedDate = email.DateTimeCreated,
-                        ModifiedDate = email.LastModifiedTime,
-                        ModifiedName = email.LastModifiedName,
-                        BodyType = email.Body.BodyType,
-                        Body = Config.IncludePartialBody && !string.IsNullOrEmpty(email.Body)
-                            ? email.Body.Text.Length < Config.PartialBodyLength ? email.Body.Text :
-                            email.Body.Text.Substring(0, Config.PartialBodyLength)
-                            : "",
-                        Subject = email.Subject,
-                        FromName = email.Sender.Name,
-                        FromAddress = email.Sender.Address,
-                        ReplyToName = string.Join(",", email.ReplyTo.Select(x => x.Name).ToArray()),
-                        ReplyToAddress = string.Join(",", email.ReplyTo.Select(x => x.Address).ToArray()),
-                        ToName = string.Join(",", email.ToRecipients.Select(x => x.Name).ToArray()),
-                        ToAddress = string.Join(",", email.ToRecipients.Select(x => x.Address).ToArray()),
-                        CcName = string.Join(",", email.CcRecipients.Select(x => x.Name).ToArray()),
-                        CcAddress = string.Join(",", email.CcRecipients.Select(x => x.Address).ToArray()),
-                        IsRead = email.IsRead,
-                        Priority = email.Importance,
-                        AttachmentCount = email.Attachments.Where(x => !x.IsInline).Select(x => x.Name).Count(),
-                        Attachments = string.Join(",",
-                            email.Attachments.Where(x => !x.IsInline).Select(x => x.Name).ToArray()),
-                        Size = email.Size
-                    }))
+                             .Select(mailItem => EmailMessage.Bind(exchangeServer, mailItem.Id,
+                                 new PropertySet(BasePropertySet.FirstClassProperties)))
+                             .Select(email => new EmailRecord
+                             {
+                                 Id = email.Id.UniqueId,
+                                 ConversationId = email.ConversationId.UniqueId,
+                                 InternetMessageId = email.InternetMessageId,
+                                 SentDate = email.DateTimeCreated,
+                                 ReceivedDate = email.DateTimeReceived,
+                                 CreatedDate = email.DateTimeCreated,
+                                 ModifiedDate = email.LastModifiedTime,
+                                 ModifiedName = email.LastModifiedName,
+                                 BodyType = email.Body.BodyType,
+                                 Body = Config.IncludePartialBody && !string.IsNullOrEmpty(email.Body)
+                                     ? email.Body.Text.Length < Config.PartialBodyLength ? email.Body.Text :
+                                     email.Body.Text.Substring(0, Config.PartialBodyLength)
+                                     : "",
+                                 Subject = email.Subject,
+                                 FromName = email.Sender.Name,
+                                 FromAddress = email.Sender.Address,
+                                 ReplyToName = string.Join(",", email.ReplyTo.Select(x => x.Name).ToArray()),
+                                 ReplyToAddress = string.Join(",", email.ReplyTo.Select(x => x.Address).ToArray()),
+                                 ToName = string.Join(",", email.ToRecipients.Select(x => x.Name).ToArray()),
+                                 ToAddress = string.Join(",", email.ToRecipients.Select(x => x.Address).ToArray()),
+                                 CcName = string.Join(",", email.CcRecipients.Select(x => x.Name).ToArray()),
+                                 CcAddress = string.Join(",", email.CcRecipients.Select(x => x.Address).ToArray()),
+                                 IsRead = email.IsRead,
+                                 Priority = email.Importance,
+                                 AttachmentCount =
+                                     email.Attachments.Where(x => !x.IsInline).Select(x => x.Name).Count(),
+                                 Attachments = string.Join(",",
+                                     email.Attachments.Where(x => !x.IsInline).Select(x => x.Name).ToArray()),
+                                 Size = email.Size
+                             }))
                 {
                     sqlClient.AddOrUpdate(address, emailRecord);
                     totalCount++;

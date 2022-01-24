@@ -16,8 +16,8 @@ namespace MailboxReporter
     {
         private const int Available = 0;
         private const int Locked = 1;
-        private int _lockState;
-        private Timer _reportTimer;
+        private int lockState;
+        private Timer reportTimer;
 
         public Reporter()
         {
@@ -58,14 +58,14 @@ namespace MailboxReporter
                 Log.Debug().Add("Last tick: {LastTick:l}", Config.LastTick.ToString("dd MMM yyyy HH:mm:ss"));
             }
 
-            _reportTimer = new Timer {Interval = 1000, AutoReset = false};
-            _reportTimer.Elapsed += ReportTick;
-            _reportTimer.Start();
+            reportTimer = new Timer {Interval = 1000, AutoReset = false};
+            reportTimer.Elapsed += ReportTick;
+            reportTimer.Start();
         }
 
         protected override void OnStop()
         {
-            _reportTimer.Stop();
+            reportTimer.Stop();
             Log.Information().Add("{Service:l} v{Version:l} stopped (Exit Code: {ExitCode})",
                 Logging.Config.AppName, Logging.Config.AppVersion, AppErrors.Success);
             Logging.Close();
@@ -77,13 +77,13 @@ namespace MailboxReporter
 
             try
             {
-                if (Interlocked.CompareExchange(ref _lockState, Locked, Available) != Available) return;
+                if (Interlocked.CompareExchange(ref lockState, Locked, Available) != Available) return;
 
-                if (_reportTimer != null && !_reportTimer.AutoReset)
+                if (reportTimer != null && !reportTimer.AutoReset)
                 {
-                    _reportTimer.Interval = 1000;
-                    _reportTimer.AutoReset = true;
-                    _reportTimer.Start();
+                    reportTimer.Interval = 1000;
+                    reportTimer.AutoReset = true;
+                    reportTimer.Start();
                 }
 
                 var thisReportTick = DateTime.Now;
@@ -101,16 +101,16 @@ namespace MailboxReporter
                         try
                         {
                             currentAddress = thread.Address;
-                            var result = Emails.ListEmails(thread.Address);
+                            var unused = Emails.ListEmails(thread.Address);
                             foreach (var mailbox in Config.Addresses.Where(mailbox =>
-                                thread.Address == mailbox.Address))
+                                         thread.Address == mailbox.Address))
                                 mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.PollInterval);
                         }
                         catch (Exception ex)
                         {
                             isError = true;
                             foreach (var mailbox in Config.Addresses.Where(mailbox =>
-                                currentAddress == mailbox.Address))
+                                         currentAddress == mailbox.Address))
                                 mailbox.NextInterval = DateTime.Now.AddMilliseconds(Config.BackoffInterval);
 
                             Log.Warning()
@@ -144,7 +144,7 @@ namespace MailboxReporter
                     ex.Message);
             }
 
-            Interlocked.CompareExchange(ref _lockState, Available, Locked);
+            Interlocked.CompareExchange(ref lockState, Available, Locked);
         }
 
         private void UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -158,7 +158,7 @@ namespace MailboxReporter
 
         private void StopError(AppErrors errorType)
         {
-            _reportTimer.Stop();
+            reportTimer.Stop();
             Log.Information().Add("{Service:l} v{Version:l} stopped (Exit Code: {ExitCode})",
                 Logging.Config.AppName, Logging.Config.AppVersion, errorType);
             Logging.Close();
