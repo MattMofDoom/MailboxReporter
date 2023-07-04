@@ -15,7 +15,7 @@
     <Authors>Matt Marlor</Authors>
     <Product>Mailbox Reporter</Product>
     <ApplicationIcon>Mailbox.ico</ApplicationIcon>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -76,8 +76,8 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Lurgle.Logging" Version="1.2.12" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.0" />
+    <PackageReference Include="Lurgle.Logging" Version="1.3.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
     <PackageReference Include="Microsoft.Exchange.WebServices" Version="2.2.0" />
   </ItemGroup>
 </Project>
